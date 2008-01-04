@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Net;
 using Microsoft.Xna.Framework.Storage;
 using XNATweener;
+using System.Reflection;
 
 namespace Tweening
 {
@@ -22,6 +23,10 @@ namespace Tweening
         Texture2D sprite;
         Vector2 position;
         Tweener tweener;
+        SpriteFont font;
+        Type transitionClass;
+        enum Easing { In, Out, InOut };
+        Easing easing;
 
         public Game1()
         {
@@ -46,12 +51,22 @@ namespace Tweening
         /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             sprite = Content.Load<Texture2D>("explosion");
 
+            font = Content.Load<SpriteFont>("Arial");
+
             position = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
-            tweener = new Tweener(position.X, sprite.Width / 2, TimeSpan.FromSeconds(1.0), Bounce.easeOut);
+
+            transitionClass = typeof(Bounce);
+            easing = Easing.Out;
+
+            tweener = new Tweener(position.X, sprite.Width / 2, TimeSpan.FromSeconds(1.0), GetTweeningFunction());
+        }
+
+        private TweeningFunction GetTweeningFunction()
+        {
+            return (TweeningFunction)Delegate.CreateDelegate(typeof(TweeningFunction), transitionClass, "Ease" + easing);
         }
 
         /// <summary>
@@ -94,6 +109,8 @@ namespace Tweening
             graphics.GraphicsDevice.Clear(Color.Black);
 
             spriteBatch.Begin(SpriteBlendMode.AlphaBlend, SpriteSortMode.Texture, SaveStateMode.None);
+            spriteBatch.DrawString(font, "SPACE: Reset", new Vector2(10), Color.Green);
+
             spriteBatch.Draw(sprite, position - (new Vector2(sprite.Width, sprite.Height) / 2), Color.White);
             spriteBatch.End();
 

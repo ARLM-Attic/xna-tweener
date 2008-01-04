@@ -4,7 +4,7 @@ namespace XNATweener
 {
     public static class Bounce
     {
-        public static float easeOut(float t, float b, float c, float d)
+        public static float EaseOut(float t, float b, float c, float d)
         {
             if ((t /= d) < (1 / 2.75))
             {
@@ -24,15 +24,15 @@ namespace XNATweener
             }
         }
 
-        public static float easeIn(float t, float b, float c, float d)
+        public static float EaseIn(float t, float b, float c, float d)
         {
-            return c - easeOut(d - t, 0, c, d) + b;
+            return c - EaseOut(d - t, 0, c, d) + b;
         }
 
-        public static float easeInOut(float t, float b, float c, float d)
+        public static float EaseInOut(float t, float b, float c, float d)
         {
-            if (t < d / 2) return easeIn(t * 2, 0, c, d) * 0.5f + b;
-            else return easeOut(t * 2 - d, 0, c, d) * .5f + c * 0.5f + b;
+            if (t < d / 2) return EaseIn(t * 2, 0, c, d) * 0.5f + b;
+            else return EaseOut(t * 2 - d, 0, c, d) * .5f + c * 0.5f + b;
         }
     }
 }
