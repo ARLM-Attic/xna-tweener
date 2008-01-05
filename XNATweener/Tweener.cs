@@ -23,7 +23,7 @@ namespace XNATweener
 
         #region Properties
         private float _position;
-        public float position
+        public float Position
         {
             get
             {
@@ -42,6 +42,10 @@ namespace XNATweener
             {
                 return _from;
             }
+            set
+            {
+                _from = value;
+            }
         }
 
         private float _change;
@@ -50,6 +54,10 @@ namespace XNATweener
             get
             {
                 return _change;
+            }
+            set
+            {
+                _change = value;
             }
         }
 
@@ -75,6 +83,13 @@ namespace XNATweener
             }
         }
 
+        private bool _running = true;
+        public bool Running
+        {
+            get { return _running; }
+            protected set { _running = value; }
+        }
+
         private TweeningFunction _tweeningFunction;
         protected TweeningFunction tweeningFunction
         {
@@ -83,23 +98,74 @@ namespace XNATweener
                 return _tweeningFunction;
             }
         }
+
+        public delegate void EndHandler();
+        public event EndHandler Ended;
         #endregion
 
         #region Methods
         public void Update(GameTime gameTime)
         {
-            position = tweeningFunction(elapsed, from, change, duration);
+            if (!Running || (elapsed == duration))
+            {
+                return;
+            }
+            Position = tweeningFunction(elapsed, from, change, duration);
             elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (elapsed > duration)
+            if (elapsed >= duration)
             {
                 elapsed = duration;
+                Position = from + change;
+                OnEnd();
             }
+        }
+
+        protected void OnEnd()
+        {
+            if (Ended != null)
+            {
+                Ended();
+            }
+        }
+
+        public void Start()
+        {
+            Running = true;
+        }
+
+        public void Stop()
+        {
+            Running = false;
         }
 
         public void Reset()
         {
             elapsed = 0.0f;
-            position = from;
+            from = Position;
+        }
+
+        public void Reset(float to)
+        {
+            change = to - Position;
+            Reset();
+        }
+
+        public void Reverse()
+        {
+            elapsed = 0.0f;
+            change = -change + (from + change - Position);
+            from = Position;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("{0}.{1}, from: {2}, to: {3}, duration: {4}s, elapsed: {5}s",
+                tweeningFunction.Method.DeclaringType.Name,
+                tweeningFunction.Method.Name,
+                from, 
+                from + change, 
+                duration, 
+                elapsed);
         }
         #endregion
     }

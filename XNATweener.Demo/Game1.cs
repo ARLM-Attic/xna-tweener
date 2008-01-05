@@ -33,6 +33,8 @@ namespace Tweening
         Tweener tweenerX;
         Tweener tweenerY;
 
+        float duration = 0.5f;
+
         Queue<Type> transitions;
         Type currentTransition;
         enum Easing { EaseIn, EaseOut, EaseInOut };
@@ -115,15 +117,32 @@ namespace Tweening
 
             bool newTweener = false;
 #if !XBOX
-            MouseState mouseState = Mouse.GetState();
-            pointerPosition.X = mouseState.X;
-            pointerPosition.Y = mouseState.Y;
-            if ((oldMouseState.LeftButton == ButtonState.Pressed) && (mouseState.LeftButton == ButtonState.Released))
-            {
-                newTweener = true;
-            }
-            oldMouseState = mouseState;
+            CheckMouseControls(ref newTweener);
 #endif
+            CheckKeyboardControls();
+
+            if (newTweener)
+            {
+                tweenerX = new Tweener(spritePosition.X, pointerPosition.X, TimeSpan.FromSeconds(duration), GetTweeningFunction());
+                tweenerY = new Tweener(spritePosition.Y, pointerPosition.Y, TimeSpan.FromSeconds(duration), GetTweeningFunction());
+            }
+
+            if (tweenerX != null)
+            {
+                tweenerX.Update(gameTime);
+                spritePosition.X = tweenerX.Position;
+            }
+            if (tweenerY != null)
+            {
+                tweenerY.Update(gameTime);
+                spritePosition.Y = tweenerY.Position;
+            }
+
+            base.Update(gameTime);
+        }
+
+        private void CheckKeyboardControls()
+        {
             KeyboardState keyboardState = Keyboard.GetState();
             if (oldKeyboardState.IsKeyDown(Keys.Up) && keyboardState.IsKeyUp(Keys.Up))
             {
@@ -133,26 +152,64 @@ namespace Tweening
             {
                 SwitchEasing();
             }
+            if (oldKeyboardState.IsKeyDown(Keys.Left) && keyboardState.IsKeyUp(Keys.Left))
+            {
+                AdjustDuration(-1);
+            }
+            if (oldKeyboardState.IsKeyDown(Keys.Right) && keyboardState.IsKeyUp(Keys.Right))
+            {
+                AdjustDuration(1);
+            }
             oldKeyboardState = keyboardState;
+        }
 
-            if (newTweener)
+        private void CheckMouseControls(ref bool newTweener)
+        {
+            MouseState mouseState = Mouse.GetState();
+            pointerPosition.X = mouseState.X;
+            pointerPosition.Y = mouseState.Y;
+            KeyboardState keyboardState = Keyboard.GetState();
+            if ((oldMouseState.LeftButton == ButtonState.Pressed) && (mouseState.LeftButton == ButtonState.Released))
             {
-                tweenerX = new Tweener(spritePosition.X, pointerPosition.X, TimeSpan.FromSeconds(0.5f), GetTweeningFunction());
-                tweenerY = new Tweener(spritePosition.Y, pointerPosition.Y, TimeSpan.FromSeconds(0.5f), GetTweeningFunction());
+                if (keyboardState.IsKeyDown(Keys.LeftControl) || keyboardState.IsKeyDown(Keys.RightControl))
+                {
+                    ResetTweener(false);
+                }
+                else if (keyboardState.IsKeyDown(Keys.LeftShift) || keyboardState.IsKeyDown(Keys.RightShift))
+                {
+                    ResetTweener(true);
+                }
+                else
+                {
+                    newTweener = true;
+                }
             }
+            if ((oldMouseState.RightButton == ButtonState.Pressed) && (mouseState.RightButton == ButtonState.Released))
+            {
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+                {
+                    ReverseTweener();
+                }
+                else
+                {
+                    ToggleTweenerRunning();
+                }
+            }
+            oldMouseState = mouseState;
+        }
 
-            if (tweenerX != null)
+        private void ResetTweener(bool resetToPosition)
+        {
+            if (resetToPosition)
             {
-                tweenerX.Update(gameTime);
-                spritePosition.X = tweenerX.position;
+                tweenerX.Reset(pointerPosition.X);
+                tweenerY.Reset(pointerPosition.Y);
             }
-            if (tweenerY != null)
+            else
             {
-                tweenerY.Update(gameTime);
-                spritePosition.Y = tweenerY.position;
+                tweenerX.Reset();
+                tweenerY.Reset();
             }
-
-            base.Update(gameTime);
         }
 
         /// <summary>
@@ -166,15 +223,36 @@ namespace Tweening
             spriteBatch.Begin(SpriteBlendMode.AlphaBlend, SpriteSortMode.BackToFront, SaveStateMode.None);
             Vector2 hudPosition = new Vector2(10);
             Vector2 lineSpacing = new Vector2(0, font.LineSpacing);
-            spriteBatch.DrawString(font, "Left Click: Apply transition " + currentTransition.Name + " " + easing, hudPosition, Color.LawnGreen);
-            spriteBatch.DrawString(font, "Up: Switch transition", hudPosition + lineSpacing, Color.LawnGreen);
-            spriteBatch.DrawString(font, "Down: Switch easing", hudPosition + lineSpacing * 2, Color.LawnGreen);
+            foreach (string line in GetHudLines())
+            {
+                spriteBatch.DrawString(font, line, hudPosition, Color.LawnGreen);
+                if (!String.IsNullOrEmpty(line))
+                {
+                    hudPosition += lineSpacing;
+                }
+            }
 
             spriteBatch.Draw(pointer, pointerPosition, null, Color.Yellow, 0, Vector2.Zero, 1, SpriteEffects.None, 0);
             spriteBatch.Draw(sprite, spritePosition, null, Color.White, 0, new Vector2(sprite.Width, sprite.Height) / 2, spriteScale, SpriteEffects.None, 1);
             spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+        private IEnumerable<string> GetHudLines()
+        {
+            return new string[] {
+                String.Format("Left Click: Apply new transition {0} {1} for {2} secs", currentTransition.Name, easing, duration),
+                "Ctrl + Left Click: Reset transition",
+                "Shift + Left Click: Reset transition with new position",
+                (tweenerX == null) ? "" : "Right Click: " + ((tweenerX.Running) ? "Stop" : "Start"),
+                "Up: Switch transition",
+                "Down: Switch easing",
+                "Left/Right: Change speed",
+                "Ctrl + Left Click: Reverse (does not change transition type)",
+                (tweenerX == null) ? "" : "Running: " + tweenerX,
+                (tweenerY == null) ? "" : "Running: " + tweenerY
+            };
         }
 
         #region Action functions
@@ -201,6 +279,47 @@ namespace Tweening
             else
             {
                 easing++;
+            }
+        }
+
+        private void AdjustDuration(int amount)
+        {
+            if (duration < 1.0f)
+            {
+                duration += amount * 0.1f;
+                return;
+            }
+            if (duration < 5.0f)
+            {
+                duration += amount * 0.5f;
+                return;
+            }
+            duration += amount;
+        }
+
+        private void ReverseTweener()
+        {
+            if (tweenerX != null)
+            {
+                tweenerX.Reverse();
+                tweenerY.Reverse();
+            }
+        }
+
+        private void ToggleTweenerRunning()
+        {
+            if (tweenerX != null)
+            {
+                if (tweenerX.Running)
+                {
+                    tweenerX.Stop();
+                    tweenerY.Stop();
+                }
+                else
+                {
+                    tweenerX.Start();
+                    tweenerY.Start();
+                }
             }
         }
         #endregion
