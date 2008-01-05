@@ -20,13 +20,24 @@ namespace Tweening
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Texture2D sprite;
-        Vector2 position;
-        Tweener tweener;
+
         SpriteFont font;
+
+        Texture2D sprite;
+        Vector2 spritePosition;
+        float spriteScale;
+
+        Texture2D pointer;
+        Vector2 pointerPosition;
+
+        Tweener tweenerX;
+        Tweener tweenerY;
+
         Type transitionClass;
         enum Easing { In, Out, InOut };
         Easing easing;
+
+        MouseState oldMouseState;
 
         public Game1()
         {
@@ -43,6 +54,7 @@ namespace Tweening
         protected override void Initialize()
         {
             base.Initialize();
+            
         }
 
         /// <summary>
@@ -52,16 +64,17 @@ namespace Tweening
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            sprite = Content.Load<Texture2D>("explosion");
+            sprite = Content.Load<Texture2D>("woot");
+            pointer = Content.Load<Texture2D>("cursorarrow");
 
             font = Content.Load<SpriteFont>("Arial");
 
-            position = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
+            spritePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
+            pointerPosition = spritePosition;
+            spriteScale = 0.25f;
 
             transitionClass = typeof(Bounce);
             easing = Easing.Out;
-
-            tweener = new Tweener(position.X, sprite.Width / 2, TimeSpan.FromSeconds(1.0), GetTweeningFunction());
         }
 
         private TweeningFunction GetTweeningFunction()
@@ -89,13 +102,34 @@ namespace Tweening
                 || Keyboard.GetState().IsKeyDown(Keys.Escape))                
                 this.Exit();
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            bool newTweener = false;
+#if !XBOX
+            MouseState mouseState = Mouse.GetState();
+            pointerPosition.X = mouseState.X;
+            pointerPosition.Y = mouseState.Y;
+            if ((oldMouseState.LeftButton == ButtonState.Pressed) && (mouseState.LeftButton == ButtonState.Released))
             {
-                tweener.Reset();
+                newTweener = true;
+            }
+            oldMouseState = mouseState;
+#endif
+
+            if (newTweener)
+            {
+                tweenerX = new Tweener(spritePosition.X, pointerPosition.X, TimeSpan.FromSeconds(1.0), GetTweeningFunction());
+                tweenerY = new Tweener(spritePosition.Y, pointerPosition.Y, TimeSpan.FromSeconds(1.0), GetTweeningFunction());
             }
 
-            tweener.Update(gameTime);
-            position.X = tweener.position;
+            if (tweenerX != null)
+            {
+                tweenerX.Update(gameTime);
+                spritePosition.X = tweenerX.position;
+            }
+            if (tweenerY != null)
+            {
+                tweenerY.Update(gameTime);
+                spritePosition.Y = tweenerY.position;
+            }
 
             base.Update(gameTime);
         }
@@ -108,10 +142,11 @@ namespace Tweening
         {
             graphics.GraphicsDevice.Clear(Color.Black);
 
-            spriteBatch.Begin(SpriteBlendMode.AlphaBlend, SpriteSortMode.Texture, SaveStateMode.None);
-            spriteBatch.DrawString(font, "SPACE: Reset", new Vector2(10), Color.Green);
+            spriteBatch.Begin(SpriteBlendMode.AlphaBlend, SpriteSortMode.BackToFront, SaveStateMode.None);
+            spriteBatch.DrawString(font, "Left Click: Apply transition", new Vector2(10), Color.LawnGreen);
 
-            spriteBatch.Draw(sprite, position - (new Vector2(sprite.Width, sprite.Height) / 2), Color.White);
+            spriteBatch.Draw(pointer, pointerPosition, null, Color.Yellow, 0, Vector2.Zero, 1, SpriteEffects.None, 0);
+            spriteBatch.Draw(sprite, spritePosition, null, Color.White, 0, new Vector2(sprite.Width, sprite.Height) / 2, spriteScale, SpriteEffects.None, 1);
             spriteBatch.End();
 
             base.Draw(gameTime);
