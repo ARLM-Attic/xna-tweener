@@ -56,9 +56,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasicDemo.cs" />
+    <Compile Include="IUsageText.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Game1.cs" />
+    <Compile Include="RotationDemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

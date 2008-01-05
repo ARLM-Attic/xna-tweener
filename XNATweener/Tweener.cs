@@ -159,7 +159,7 @@ namespace XNATweener
 
         public override string ToString()
         {
-            return String.Format("{0}.{1}, from: {2}, to: {3}, duration: {4}s, elapsed: {5}s",
+            return String.Format("{0}.{1}. Tween {2} -> {3} in {4}s. Elapsed {5:##0.##}s",
                 tweeningFunction.Method.DeclaringType.Name,
                 tweeningFunction.Method.Name,
                 from, 
