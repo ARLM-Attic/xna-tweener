@@ -54,8 +54,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Back.cs" />
     <Compile Include="Bounce.cs" />
+    <Compile Include="Circular.cs" />
+    <Compile Include="Cubic.cs" />
+    <Compile Include="Elastic.cs" />
+    <Compile Include="Exponential.cs" />
+    <Compile Include="Linear.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Quadratic.cs" />
+    <Compile Include="Quartic.cs" />
+    <Compile Include="Quintic.cs" />
+    <Compile Include="Sinusoidal.cs" />
     <Compile Include="Tweener.cs" />
   </ItemGroup>
   <ItemGroup>

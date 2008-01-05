@@ -7,13 +7,18 @@ namespace XNATweener
 
     public class Tweener
     {
-        public Tweener(float from, float to, TimeSpan duration, TweeningFunction tweeningFunction)
+        public Tweener(float from, float to, float duration, TweeningFunction tweeningFunction)
         {
             _from = from;
             _position = from;
             _change = to - from;
             _tweeningFunction = tweeningFunction;
             _duration = duration;
+        }
+
+        public Tweener(float from, float to, TimeSpan duration, TweeningFunction tweeningFunction)
+            : this(from, to, (float)duration.TotalSeconds, tweeningFunction)
+        {
         }
 
         #region Properties
@@ -48,8 +53,8 @@ namespace XNATweener
             }
         }
 
-        private TimeSpan _duration;
-        protected TimeSpan duration
+        private float _duration;
+        protected float duration
         {
             get
             {
@@ -57,8 +62,8 @@ namespace XNATweener
             }
         }
 
-        private TimeSpan _elapsed = TimeSpan.Zero;
-        protected TimeSpan elapsed
+        private float _elapsed = 0.0f;
+        protected float elapsed
         {
             get
             {
@@ -83,8 +88,8 @@ namespace XNATweener
         #region Methods
         public void Update(GameTime gameTime)
         {
-            position = tweeningFunction((float)elapsed.TotalSeconds, from, change, (float)duration.TotalSeconds);
-            elapsed += gameTime.ElapsedGameTime;
+            position = tweeningFunction(elapsed, from, change, duration);
+            elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (elapsed > duration)
             {
                 elapsed = duration;
@@ -93,7 +98,7 @@ namespace XNATweener
 
         public void Reset()
         {
-            elapsed = TimeSpan.Zero;
+            elapsed = 0.0f;
             position = from;
         }
         #endregion
