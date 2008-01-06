@@ -16,16 +16,14 @@ namespace XNATweener
             return c * ((t = t / d - 1) * t * ((1.70158f + 1) * t + 1.70158f) + 1) + b;
         }
 
-        /// NOTE: This method is not really working...
         public static float EaseInOut(float t, float b, float c, float d)
         {
-            float s = 1.70158f * 1.525f;
+            float s = 1.70158f;
             if ((t /= d / 2) < 1)
             {
-                return c / 2 * (t * t * ((s + 1) * t - 1.70158f)) + b;
+                return c / 2 * (t * t * (((s *= (1.525f)) + 1) * t - s)) + b;
             }
-            t -= 2;
-            return c / 2 * (t * t * ((s + 1) * t + 1.70158f) + 2) + b;
+            return c / 2 * ((t -= 2) * t * (((s *= (1.525f)) + 1) * t + s) + 2) + b;
         }
     }
 }
