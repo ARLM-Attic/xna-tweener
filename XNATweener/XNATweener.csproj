@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Back.cs" />
+    <Compile Include="BaseTweener.cs" />
     <Compile Include="Bounce.cs" />
     <Compile Include="Circular.cs" />
     <Compile Include="Cubic.cs" />
@@ -67,6 +68,8 @@
     <Compile Include="Quintic.cs" />
     <Compile Include="Sinusoidal.cs" />
     <Compile Include="Tweener.cs" />
+    <Compile Include="Vector2Tweener.cs" />
+    <Compile Include="Vector3Tweener.cs" />
   </ItemGroup>
   <ItemGroup>
     <NestedContentProject Include="Content\Content.contentproj">

@@ -1,12 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using Microsoft.Xna.Framework;
 
 namespace XNATweener
 {
     /// <summary>
-    /// This is a Tweener for single float values.
+    /// This is a tweener for Vector2 values
     /// </summary>
-    public class Tweener : BaseTweener<float>
+    public class Vector2Tweener : BaseTweener<Vector2>
     {
         #region Constructors
         /// <summary>
@@ -16,7 +18,7 @@ namespace XNATweener
         /// <param name="to">The position reached at the end</param>
         /// <param name="duration">How long befor we reach the end?</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Tweener(float from, float to, float duration, TweeningFunction tweeningFunction)
+        public Vector2Tweener(Vector2 from, Vector2 to, float duration, TweeningFunction tweeningFunction)
             : base(from, to, duration, tweeningFunction)
         {
         }
@@ -28,7 +30,7 @@ namespace XNATweener
         /// <param name="to">The position reached at the end</param>
         /// <param name="duration">How long befor we reach the end?</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Tweener(float from, float to, TimeSpan duration, TweeningFunction tweeningFunction)
+        public Vector2Tweener(Vector2 from, Vector2 to, TimeSpan duration, TweeningFunction tweeningFunction)
             : base(from, to, (float)duration.TotalSeconds, tweeningFunction)
         {
         }
@@ -40,7 +42,7 @@ namespace XNATweener
         /// </summary>
         /// <param name="duration">The duration of tweening.</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Tweener(float duration, TweeningFunction tweeningFunction)
+        public Vector2Tweener(float duration, TweeningFunction tweeningFunction)
             : base(duration, tweeningFunction)
         {
         }
@@ -52,7 +54,7 @@ namespace XNATweener
         /// </summary>
         /// <param name="duration">The duration of tweening.</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Tweener(TimeSpan duration, TweeningFunction tweeningFunction)
+        public Vector2Tweener(TimeSpan duration, TweeningFunction tweeningFunction)
             : this((float)duration.TotalSeconds, tweeningFunction)
         {
         }
@@ -68,7 +70,7 @@ namespace XNATweener
         /// <param name="to">The position reached at the end</param>
         /// <param name="duration">The average movement speed of the tweener</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Tweener(float from, float to, TweeningFunction tweeningFunction, float speed)
+        public Vector2Tweener(Vector2 from, Vector2 to, TweeningFunction tweeningFunction, float speed)
             : base(from, to, tweeningFunction, speed)
         {
         }
@@ -77,54 +79,63 @@ namespace XNATweener
         #region Methods
         /// <summary>
         /// Do the actual update of the position.
+        /// Usually we will use the tweening function here.
         /// </summary>
-        /// <param name="timeElapsed">The time that has elapsed since the beginning of the tweener.</param>
-        /// <param name="start">Where did the tweener start</param>
+        /// <param name="elapsed"></param>
+        /// <param name="from"></param>
         /// <param name="change">How much will the tweener move from start to end</param>
         /// <param name="duration">The total duration of tweening.</param>
-        protected override void UpdatePosition(float elapsed, float from, float change, float duration)
+        protected override void UpdatePosition(float elapsed, Vector2 from, Vector2 change, float duration)
         {
-            Position = tweeningFunction(elapsed, from, change, duration);
+            Position = new Vector2(tweeningFunction(elapsed, from.X, change.X, duration),
+                                   tweeningFunction(elapsed, from.Y, change.Y, duration));
         }
 
         /// <summary>
-        /// Calculate the change value.
+        /// Calculate the change value. Usually this is to - from.
         /// </summary>
         /// <param name="to">Where do we want to end</param>
         /// <param name="from">Where we are now</param>
         /// <returns>Returns the new change value</returns>
-        protected override float CalculateChange(float to, float from)
+        protected override Vector2 CalculateChange(Vector2 to, Vector2 from)
         {
             return to - from;
         }
 
         /// <summary>
         /// Calculate the position we want to end up in. This is nessecary as to is not saved.
+        /// Usually this is from + change
         /// </summary>
-        /// <returns>Returns the end position when the tweener is finished.</returns>
-        protected override float CalculateEndPosition()
+        /// <returns>
+        /// Returns the end position when the tweener is finished.
+        /// </returns>
+        protected override Vector2 CalculateEndPosition()
         {
             return from + change;
         }
 
         /// <summary>
         /// Calculate the new change value if we reverse the tweener from the current position.
+        /// Usually this is from - Position
         /// </summary>
-        /// <returns>Returns the new change value when tweening is reversed</returns>
-        protected override float CalculateReverseChange()
+        /// <returns>
+        /// Returns the new change value when tweening is reversed
+        /// </returns>
+        protected override Vector2 CalculateReverseChange()
         {
             return from - Position;
         }
 
         /// <summary>
         /// Calculate the duration of the tween in seconds given the average speed of movement.
+        /// Usually this is change / speed
         /// </summary>
         /// <param name="speed">The average movement speed</param>
         /// <returns>The duration of the tweener</returns>
         protected override float CalculateDurationFromSpeed(float speed)
         {
-            return change / speed;
-        }
+            return change.Length() / speed;
+        } 
         #endregion
     }
 }
