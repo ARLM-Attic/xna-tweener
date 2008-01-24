@@ -25,8 +25,7 @@ namespace Tweening
         protected Texture2D pointer;
         protected Vector2 pointerPosition;
 
-        protected Tweener tweenerX;
-        protected Tweener tweenerY;
+        protected Vector2Tweener tweener;
 
         float duration = 0.5f;
 
@@ -87,15 +86,9 @@ namespace Tweening
                 CreateNewTweener();
             }
 
-            if (tweenerX != null)
+            if (tweener != null)
             {
-                tweenerX.Update(gameTime);
-                spritePosition.X = tweenerX.Position;
-            }
-            if (tweenerY != null)
-            {
-                tweenerY.Update(gameTime);
-                spritePosition.Y = tweenerY.Position;
+                tweener.Update(gameTime);
             }
 
             base.Update(gameTime);
@@ -175,13 +168,12 @@ namespace Tweening
                 String.Format("Left Click: Apply new transition {0} {1} for {2:##0.0} secs", currentTransition.Name, easing, duration),
                 "Ctrl + Left Click: Reset transition",
                 "Shift + Left Click: Reset transition with new position",
-                (tweenerX == null) ? "" : "Right Click: " + ((tweenerX.Running) ? "Stop" : "Start"),
+                (tweener == null) ? "" : "Right Click: " + ((tweener.Running) ? "Stop" : "Start"),
                 "Up: Switch transition",
                 "Down: Switch easing",
                 "Left/Right: Change speed",
                 "Ctrl + Left Click: Reverse (does not change transition type)",
-                (tweenerX == null) ? "" : "Running: " + tweenerX,
-                (tweenerY == null) ? "" : "Running: " + tweenerY
+                (tweener == null) ? "" : "Running: " + tweener,
             };
         }
     	#endregion
@@ -194,8 +186,8 @@ namespace Tweening
 
         protected virtual void CreateNewTweener()
         {
-            tweenerX = new Tweener(spritePosition.X, pointerPosition.X, TimeSpan.FromSeconds(duration), GetTweeningFunction());
-            tweenerY = new Tweener(spritePosition.Y, pointerPosition.Y, TimeSpan.FromSeconds(duration), GetTweeningFunction());
+            tweener = new Vector2Tweener(spritePosition, pointerPosition, TimeSpan.FromSeconds(duration), GetTweeningFunction());
+            tweener.PositionChanged += delegate(Vector2 newPosition) { spritePosition = newPosition; };
         }
 
         private void SwitchTransition()
@@ -236,41 +228,39 @@ namespace Tweening
 
         private void ReverseTweener()
         {
-            if (tweenerX != null)
+            if (tweener != null)
             {
-                tweenerX.Reverse();
-                tweenerY.Reverse();
+                tweener.Reverse();
             }
         }
 
         private void ToggleTweenerRunning()
         {
-            if (tweenerX != null)
+            if (tweener != null)
             {
-                if (tweenerX.Running)
+                if (tweener.Running)
                 {
-                    tweenerX.Stop();
-                    tweenerY.Stop();
+                    tweener.Stop();
                 }
                 else
                 {
-                    tweenerX.Start();
-                    tweenerY.Start();
+                    tweener.Start();
                 }
             }
         }
 
         private void ResetTweener(bool resetToPosition)
         {
-            if (resetToPosition)
+            if (tweener != null)
             {
-                tweenerX.Reset(pointerPosition.X);
-                tweenerY.Reset(pointerPosition.Y);
-            }
-            else
-            {
-                tweenerX.Reset();
-                tweenerY.Reset();
+                if (resetToPosition)
+                {
+                    tweener.Reset(pointerPosition);
+                }
+                else
+                {
+                    tweener.Reset();
+                }
             }
         }
         #endregion

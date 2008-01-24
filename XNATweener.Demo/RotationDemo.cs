@@ -46,7 +46,7 @@ namespace Tweening
         protected override void CreateNewTweener()
         {
             base.CreateNewTweener();
-            tweenerX.Ended += rotationTweener.Start;
+            tweener.Ended += rotationTweener.Start;
         }
     }
 }
