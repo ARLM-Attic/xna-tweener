@@ -42,20 +42,8 @@ namespace XNATweener
         /// </summary>
         /// <param name="duration">The duration of tweening.</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Vector2Tweener(float duration, TweeningFunction tweeningFunction)
-            : base(duration, tweeningFunction)
-        {
-        }
-
-        /// <summary>
-        /// Create a stopped tweener with no information on where to move from and to.
-        /// Useful in conjunction with the Reset(from, to) call to ready a tweener for later use or lazy
-        /// instantiation of a tweener in a property.
-        /// </summary>
-        /// <param name="duration">The duration of tweening.</param>
-        /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        public Vector2Tweener(TimeSpan duration, TweeningFunction tweeningFunction)
-            : this((float)duration.TotalSeconds, tweeningFunction)
+        public Vector2Tweener(TweeningFunction tweeningFunction)
+            : base(tweeningFunction)
         {
         }
 
@@ -112,18 +100,6 @@ namespace XNATweener
         protected override Vector2 CalculateEndPosition()
         {
             return from + change;
-        }
-
-        /// <summary>
-        /// Calculate the new change value if we reverse the tweener from the current position.
-        /// Usually this is from - Position
-        /// </summary>
-        /// <returns>
-        /// Returns the new change value when tweening is reversed
-        /// </returns>
-        protected override Vector2 CalculateReverseChange()
-        {
-            return from - Position;
         }
 
         /// <summary>

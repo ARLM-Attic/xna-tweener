@@ -29,9 +29,9 @@ namespace XNATweener
     /// 
     /// Note that this is an abstract class, refer to the concrete subclasses for tweening the value you want tweened.
     /// </summary>
-    public abstract class BaseTweener<T>
+    public abstract class BaseTweener<T> : ITweener<T>
     {
-        #region Properties
+        #region Constructors
         /// <summary>
         /// Create a Tweener with info on where to move from and to, how long it should take and the function to use.
         /// </summary>
@@ -67,11 +67,10 @@ namespace XNATweener
         /// </summary>
         /// <param name="duration">The duration of tweening.</param>
         /// <param name="tweeningFunction">Which function to use for calculating the current position.</param>
-        protected BaseTweener(float duration, TweeningFunction tweeningFunction)
+        protected BaseTweener(TweeningFunction tweeningFunction)
         {
-            _duration = duration;
             _tweeningFunction = tweeningFunction;
-            _running = false;
+            _playing = false;
         }
 
         /// <summary>
@@ -177,15 +176,27 @@ namespace XNATweener
             }
         }
 
-        private bool _running = true;
+        private bool _playing = true;
         /// <summary>
         /// Is the tweener currently running. If the tweener is not running, calling Update will not move the
         /// tweener.
         /// </summary>
+        [Obsolete("Use Playing property instead")]
         public bool Running
         {
-            get { return _running; }
-            protected set { _running = value; }
+            get { return _playing; }
+            protected set { _playing = value; }
+        }
+
+        /// <summary>
+        /// <para>Is the tweener currently playing.</para> 
+        /// <para>If the tweener is not playing, calling Update will not move the tweener.</para>
+        /// <para>The tweener can be controlled by calling the Play and Pause methods</para>
+        /// </summary>
+        public bool Playing
+        {
+            get { return _playing; }
+            protected set { _playing = value; }
         }
 
         private TweeningFunction _tweeningFunction;
@@ -200,13 +211,19 @@ namespace XNATweener
             }
         }
 
-        public delegate void PositionChangedHandler(T newPosition);
+        public LoopHelper Loop
+        {
+            get
+            {
+                return new LoopHelper(this);
+            }
+        }
+
         /// <summary>
         /// Event that is called whenever the position of the tweener has changed
         /// </summary>
-        public event PositionChangedHandler PositionChanged;
+        public event PositionChangedHandler<T> PositionChanged;
 
-        public delegate void EndHandler();
         /// <summary>
         /// Event that is called when the tweener reaches the end. At this point in time the tweener is guaranteed to
         /// to be at the ending position no matter how many times it was stopped and started.
@@ -222,7 +239,7 @@ namespace XNATweener
         /// <param name="gameTime">The current game time.</param>
         public void Update(GameTime gameTime)
         {
-            if (!Running || (elapsed == duration))
+            if (!Playing || (elapsed == duration))
             {
                 return;
             }
@@ -268,13 +285,6 @@ namespace XNATweener
         protected abstract T CalculateEndPosition();
 
         /// <summary>
-        /// Calculate the new change value if we reverse the tweener from the current position.
-        /// Usually this is from - Position
-        /// </summary>
-        /// <returns>Returns the new change value when tweening is reversed</returns>
-        protected abstract T CalculateReverseChange();
-
-        /// <summary>
         /// Calculate the duration of the tween in seconds given the average speed of movement.
         /// Usually this is change / speed
         /// </summary>
@@ -285,6 +295,7 @@ namespace XNATweener
         /// <summary>
         /// Start the tweener if it is paused. If it is already running, nothing happens.
         /// </summary>
+        [Obsolete("Use Play method instead")]
         public void Start()
         {
             Running = true;
@@ -293,18 +304,37 @@ namespace XNATweener
         /// <summary>
         /// Stop the tweener if it is running. If it is already stopped, nothing happens.
         /// </summary>
+        [Obsolete("Use Pause method instead")]
         public void Stop()
         {
             Running = false;
         }
 
         /// <summary>
-        /// Reset the tweenr to start again from the beginning.
+        /// Start the tweener from its current position if it is paused. If it is already playing, nothing happens.
+        /// </summary>
+        public void Play()
+        {
+            Playing = true;
+        }
+
+        /// <summary>
+        /// <para>Pause the tweener if it is playing. If it is already paused, nothing happens.</para>
+        /// <para>The tweener can be started again by calling Play</para>
+        /// </summary>
+        public void Pause()
+        {
+            Playing = false;
+        }
+
+        /// <summary>
+        /// <para>Reset the tweener to start again from the beginning.</para>
+        /// <para>If the tweener is stopped it will not start, use Restart if that is what you want.</para>
         /// </summary>
         public void Reset()
         {
             elapsed = 0.0f;
-            from = Position;
+            Position = from;
         }
 
         /// <summary>
@@ -315,7 +345,8 @@ namespace XNATweener
         public void Reset(T to)
         {
             change = CalculateChange(to, Position);
-            Reset();
+            from = Position;
+            elapsed = 0.0f;
         }
 
         /// <summary>
@@ -341,6 +372,39 @@ namespace XNATweener
         }
 
         /// <summary>
+        /// Reset the tweener with a new set of from and to positons.
+        /// </summary>
+        /// <param name="to">The new position to move to</param>
+        /// <param name="duration">The new duration of the tweener</param>
+        public void Reset(T from, T to, TimeSpan duration)
+        {
+            Position = from;
+            Reset(to);
+            this.duration = (float)duration.TotalSeconds;
+        }
+
+        /// <summary>
+        /// Reset the tweener with a new set of from and to positons.
+        /// </summary>
+        /// <param name="to">The new position to move to</param>
+        /// <param name="duration">The new average speed of tweener movement</param>
+        public void Reset(T from, T to, float speed)
+        {
+            Position = from;
+            Reset(to);
+            this.duration = CalculateDurationFromSpeed(speed);
+        }
+
+        /// <summary>
+        /// Resets the tweener and starts it playing if it is paused.
+        /// </summary>
+        public void Restart()
+        {
+            Reset();
+            Play();
+        }
+
+        /// <summary>
         /// Reverses movement of the tweener from the current position back to where it came.
         /// This can reverse the tweener before it is done, but be aware that reversing the tweener again
         /// later will not return it to its original destination, but to the point where it was reversed
@@ -349,7 +413,7 @@ namespace XNATweener
         public void Reverse()
         {
             elapsed = 0.0f;
-            change = CalculateReverseChange();
+            change = CalculateChange(from, Position);
             from = Position;
         }
 
@@ -366,6 +430,38 @@ namespace XNATweener
                 CalculateEndPosition(),
                 duration,
                 elapsed);
+        }
+        #endregion
+
+        #region Internal classes
+        public struct LoopHelper
+        {
+            internal LoopHelper(ITweener tweener)
+            {
+                this.tweener = tweener;
+            }
+
+            private ITweener tweener;
+
+            public void FrontToBack()
+            {
+                XNATweener.Loop.FrontToBack(tweener);
+            }
+
+            public void FrontToBack(int times)
+            {
+                XNATweener.Loop.FrontToBack(tweener, times);
+            }
+
+            public void BackAndForth()
+            {
+                XNATweener.Loop.BackAndForth(tweener);
+            }
+
+            public void BackAndForth(int times)
+            {
+                XNATweener.Loop.BackAndForth(tweener, times);
+            }
         }
         #endregion
     }

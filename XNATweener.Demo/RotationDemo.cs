@@ -22,9 +22,9 @@ namespace Tweening
             base.Initialize();
 
             rotationTweener = new Tweener(0.0f, (float)Math.PI * 2, 0.5f, GetTweeningFunction());
-            rotationTweener.Stop();
+            rotationTweener.Pause();
             rotationTweener.Ended += rotationTweener.Reset;
-            rotationTweener.Ended += rotationTweener.Stop;
+            rotationTweener.Ended += rotationTweener.Pause;
         }
 
         public override void Update(GameTime gameTime)
@@ -46,7 +46,7 @@ namespace Tweening
         protected override void CreateNewTweener()
         {
             base.CreateNewTweener();
-            tweener.Ended += rotationTweener.Start;
+            tweener.Ended += rotationTweener.Play;
         }
     }
 }

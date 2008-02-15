@@ -89,12 +89,20 @@ namespace Tweening
             {
                 SwitchDemo(new RotationDemo(this));
             }
+            if (oldKeyboardState.IsKeyDown(Keys.F3) && keyboardState.IsKeyUp(Keys.F3))
+            {
+                SwitchDemo(new ColorDemo(this));
+            }
+            if (oldKeyboardState.IsKeyDown(Keys.F4) && keyboardState.IsKeyUp(Keys.F4))
+            {
+                SwitchDemo(new LoopDemo(this));
+            }
 
             oldKeyboardState = keyboardState;
             base.Update(gameTime);
         }
 
-        private void SwitchDemo(BasicDemo newDemo)
+        private void SwitchDemo(DrawableGameComponent newDemo)
         {
             if (activeDemo != null)
             {
@@ -118,7 +126,7 @@ namespace Tweening
             spriteBatch.Begin(SpriteBlendMode.AlphaBlend, SpriteSortMode.BackToFront, SaveStateMode.None);
             Vector2 hudPosition = new Vector2(10);
             Vector2 lineSpacing = new Vector2(0, font.LineSpacing);
-            spriteBatch.DrawString(font, activeDemo.GetType().Name, hudPosition, Color.Red, 0.0f, Vector2.Zero, 2.0f, SpriteEffects.None, 0.0f);
+            spriteBatch.DrawString(font, activeDemo.GetType().Name, hudPosition, Color.Yellow, 0.0f, Vector2.Zero, 2.0f, SpriteEffects.None, 0.0f);
             hudPosition += lineSpacing * 2;
 
             foreach (string line in (activeDemo as IUsageText).GetUsageText())
@@ -128,15 +136,21 @@ namespace Tweening
                     continue;
                 }
                 string[] lineParts = line.Split(':');
-                lineParts[0] += ":";
+                if (lineParts.Length > 1)
+                {
+                    lineParts[0] += ":";
+                }
                 Vector2 size = font.MeasureString(lineParts[0]);
                 size.Y = 0;
                 spriteBatch.DrawString(font, lineParts[0], hudPosition, Color.White);
-                spriteBatch.DrawString(font, lineParts[1], hudPosition + size, Color.Black);
+                if (lineParts.Length > 1)
+                {
+                    spriteBatch.DrawString(font, lineParts[1], hudPosition + size, Color.Black);
+                }
                 hudPosition += lineSpacing;
             }
 
-            spriteBatch.DrawString(font, "Press F1 or F2 to choose demo", new Vector2(10, GraphicsDevice.Viewport.Height - font.LineSpacing * 3), Color.Black);
+            spriteBatch.DrawString(font, "Press F1-F4 to choose demo", new Vector2(10, GraphicsDevice.Viewport.Height - font.LineSpacing * 3), Color.Black);
             spriteBatch.End();
         }
     }

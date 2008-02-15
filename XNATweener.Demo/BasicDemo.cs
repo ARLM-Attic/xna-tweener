@@ -164,17 +164,21 @@ namespace Tweening
         #region Draw helpers
         public IEnumerable<string> GetUsageText()
         {
-            return new string[] {
-                String.Format("Left Click: Apply new transition {0} {1} for {2:##0.0} secs", currentTransition.Name, easing, duration),
-                "Ctrl + Left Click: Reset transition",
-                "Shift + Left Click: Reset transition with new position",
-                (tweener == null) ? "" : "Right Click: " + ((tweener.Running) ? "Stop" : "Start"),
-                "Up: Switch transition",
-                "Down: Switch easing",
-                "Left/Right: Change speed",
-                "Ctrl + Left Click: Reverse (does not change transition type)",
-                (tweener == null) ? "" : "Running: " + tweener,
-            };
+            yield return String.Format("Left Click: Apply new transition {0} {1} for {2:##0.0} secs", currentTransition.Name, easing, duration);
+            yield return "Ctrl + Left Click: Reset transition";
+            yield return "Shift + Left Click: Reset transition with new position";
+            if (tweener != null)
+            {
+                yield return "Right Click: " + ((tweener.Playing) ? "Stop" : "Start");
+            }
+            yield return "Up: Switch transition";
+            yield return "Down: Switch easing";
+            yield return "Left/Right: Change speed";
+            yield return "Ctrl + Left Click: Reverse (does not change transition type)";
+            if (tweener != null)
+            {
+                yield return "Running: " + tweener;
+            }
         }
     	#endregion
 
@@ -238,13 +242,13 @@ namespace Tweening
         {
             if (tweener != null)
             {
-                if (tweener.Running)
+                if (tweener.Playing)
                 {
-                    tweener.Stop();
+                    tweener.Pause();
                 }
                 else
                 {
-                    tweener.Start();
+                    tweener.Play();
                 }
             }
         }
